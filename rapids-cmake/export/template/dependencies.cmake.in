@@ -18,11 +18,21 @@ include(CMakeFindDependencyMacro)
 
 @RAPIDS_EXPORT_CONTENTS@
 
+message("In generated dependency file.\
+\
+\
+\
+\
+")
+
 foreach(target IN LISTS rapids_global_targets)
+  message("Inspecting target ${target}")
   if(TARGET ${target})
     get_target_property(_is_imported ${target} IMPORTED)
     get_target_property(_already_global ${target} IMPORTED_GLOBAL)
+    message("Found target ${target}, ${_is_imported}, ${target}")
     if(_is_imported AND NOT _already_global)
+        message("${target} matched condition")
         set_target_properties(${target} PROPERTIES IMPORTED_GLOBAL TRUE)
     endif()
   endif()

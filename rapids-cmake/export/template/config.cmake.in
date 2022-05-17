@@ -65,11 +65,21 @@ if(rapids_namespaced_global_targets)
   list(TRANSFORM rapids_namespaced_global_targets PREPEND @RAPIDS_NAMESPACE@ )
 endif()
 
+message("In generated config file.\
+\
+\
+\
+\
+")
+
 foreach(target IN LISTS rapids_namespaced_global_targets)
+  message("Inspecting namespace target ${target}")
   if(TARGET ${target})
+    message("Found target ${target}")
     get_target_property(_is_imported ${target} IMPORTED)
     get_target_property(_already_global ${target} IMPORTED_GLOBAL)
     if(_is_imported AND NOT _already_global)
+      message("${target} matched condition")
       set_target_properties(${target} PROPERTIES IMPORTED_GLOBAL TRUE)
     endif()
   endif()
@@ -77,11 +87,15 @@ endforeach()
 
 # For backwards compat
 if("rapids_config_@type@" STREQUAL "rapids_config_build")
+  message("In the backwards compat")
   foreach(target IN LISTS rapids_global_targets)
+    message("Inspecting target ${target}")
     if(TARGET ${target})
       get_target_property(_is_imported ${target} IMPORTED)
       get_target_property(_already_global ${target} IMPORTED_GLOBAL)
+      message("Found target ${target}, ${_is_imported}, ${target}")
       if(_is_imported AND NOT _already_global)
+        message("${target} matched condition")
         set_target_properties(${target} PROPERTIES IMPORTED_GLOBAL TRUE)
       endif()
       if(NOT TARGET @RAPIDS_NAMESPACE@${target})
