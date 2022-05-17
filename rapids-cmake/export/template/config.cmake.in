@@ -34,20 +34,30 @@ This module will set the following variables::
 
 cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@)
 
+message("In generated config file.\
+\
+\
+\
+\
+")
+
 set(rapids_global_languages @RAPIDS_LANGUAGES@)
 foreach(lang IN LISTS rapids_global_languages)
   include("${CMAKE_CURRENT_LIST_DIR}/@project_name@-${lang}-language.cmake")
 endforeach()
 unset(rapids_global_languages)
 
+message("Checking for file ${CMAKE_CURRENT_LIST_DIR}/@project_name@-dependencies.cmake")
 if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/@project_name@-dependencies.cmake")
   include("${CMAKE_CURRENT_LIST_DIR}/@project_name@-dependencies.cmake")
 endif()
 
+message("Checking for file ${CMAKE_CURRENT_LIST_DIR}/@project_name@-targets.cmake")
 if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/@project_name@-targets.cmake")
   include("${CMAKE_CURRENT_LIST_DIR}/@project_name@-targets.cmake")
 endif()
 
+message("Checking for file ${CMAKE_CURRENT_LIST_DIR}/@project_name@-config-version.cmake")
 if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/@project_name@-config-version.cmake")
   include("${CMAKE_CURRENT_LIST_DIR}/@project_name@-config-version.cmake")
 endif()
@@ -65,19 +75,12 @@ if(rapids_namespaced_global_targets)
   list(TRANSFORM rapids_namespaced_global_targets PREPEND @RAPIDS_NAMESPACE@ )
 endif()
 
-message("In generated config file.\
-\
-\
-\
-\
-")
-
 foreach(target IN LISTS rapids_namespaced_global_targets)
   message("Inspecting namespace target ${target}")
   if(TARGET ${target})
-    message("Found target ${target}")
     get_target_property(_is_imported ${target} IMPORTED)
     get_target_property(_already_global ${target} IMPORTED_GLOBAL)
+    message("Found target ${target}, ${_is_imported}, ${target}")
     if(_is_imported AND NOT _already_global)
       message("${target} matched condition")
       set_target_properties(${target} PROPERTIES IMPORTED_GLOBAL TRUE)
