@@ -122,6 +122,7 @@ function(rapids_cpm_nvcomp)
   endif()
 
   include("${rapids-cmake-dir}/cpm/find.cmake")
+  set(CMAKE_FIND_DEBUG_MODE TRUE)
   rapids_cpm_find(nvcomp ${version} ${_RAPIDS_UNPARSED_ARGUMENTS}
                   GLOBAL_TARGETS nvcomp::nvcomp
                   CPM_ARGS
@@ -133,6 +134,7 @@ function(rapids_cpm_nvcomp)
                   OPTIONS "BUILD_STATIC ON" "BUILD_TESTS OFF" "BUILD_BENCHMARKS OFF"
                           "BUILD_EXAMPLES OFF")
 
+  set(CMAKE_FIND_DEBUG_MODE FALSE)
   include("${rapids-cmake-dir}/cpm/detail/display_patch_status.cmake")
   rapids_cpm_display_patch_status(nvcomp)
 
