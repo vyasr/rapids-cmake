@@ -88,41 +88,43 @@ function(rapids_cpm_nvcomp)
   endif()
 
   # first see if we have a proprietary pre-built binary listed in versions.json and it if requested.
-  set(nvcomp_proprietary_binary OFF) # will be set to true by rapids_cpm_get_proprietary_binary
-  if(_RAPIDS_USE_PROPRIETARY_BINARY)
-    include("${rapids-cmake-dir}/cpm/detail/get_proprietary_binary_url.cmake")
-    include("${rapids-cmake-dir}/cpm/detail/download_proprietary_binary.cmake")
-    rapids_cpm_get_proprietary_binary_url(nvcomp ${version} nvcomp_url)
-    if(nvcomp_url)
-      rapids_cpm_download_proprietary_binary(nvcomp ${nvcomp_url})
+  find_package(nvcomp ${version} QUIET)
+  if(NOT nvcomp_FOUND)
+    set(nvcomp_proprietary_binary OFF) # will be set to true by rapids_cpm_get_proprietary_binary
+    if(_RAPIDS_USE_PROPRIETARY_BINARY)
+      include("${rapids-cmake-dir}/cpm/detail/get_proprietary_binary_url.cmake")
+      include("${rapids-cmake-dir}/cpm/detail/download_proprietary_binary.cmake")
+      rapids_cpm_get_proprietary_binary_url(nvcomp ${version} nvcomp_url)
+      if(nvcomp_url)
+        rapids_cpm_download_proprietary_binary(nvcomp ${nvcomp_url})
+      endif()
+
+      # Record the nvcomp_DIR so that if USE_PROPRIETARY_BINARY is disabled we can safely clear the
+      # nvcomp_DIR value
+      if(nvcomp_proprietary_binary)
+        set(nvcomp_proprietary_binary_dir "${nvcomp_ROOT}/lib/cmake/nvcomp")
+        cmake_path(NORMAL_PATH nvcomp_proprietary_binary_dir)
+        set(rapids_cpm_nvcomp_proprietary_binary_dir "${nvcomp_proprietary_binary_dir}"
+            CACHE INTERNAL "nvcomp proprietary location")
+      endif()
+    elseif(DEFINED nvcomp_DIR)
+      cmake_path(NORMAL_PATH nvcomp_DIR)
+      if(nvcomp_DIR STREQUAL rapids_cpm_nvcomp_proprietary_binary_dir)
+        unset(nvcomp_DIR)
+        unset(nvcomp_DIR CACHE)
+      endif()
     endif()
 
-    # Record the nvcomp_DIR so that if USE_PROPRIETARY_BINARY is disabled we can safely clear the
-    # nvcomp_DIR value
-    if(nvcomp_proprietary_binary)
-      set(nvcomp_proprietary_binary_dir "${nvcomp_ROOT}/lib/cmake/nvcomp")
-      cmake_path(NORMAL_PATH nvcomp_proprietary_binary_dir)
-      set(rapids_cpm_nvcomp_proprietary_binary_dir "${nvcomp_proprietary_binary_dir}"
-          CACHE INTERNAL "nvcomp proprietary location")
-    endif()
-  elseif(DEFINED nvcomp_DIR)
-    cmake_path(NORMAL_PATH nvcomp_DIR)
-    if(nvcomp_DIR STREQUAL rapids_cpm_nvcomp_proprietary_binary_dir)
-      unset(nvcomp_DIR)
-      unset(nvcomp_DIR CACHE)
-    endif()
-  endif()
+    include("${rapids-cmake-dir}/cpm/detail/generate_patch_command.cmake")
+    rapids_cpm_generate_patch_command(nvcomp ${version} patch_command)
 
-  include("${rapids-cmake-dir}/cpm/detail/generate_patch_command.cmake")
-  rapids_cpm_generate_patch_command(nvcomp ${version} patch_command)
-
-  # Apply any patch commands to the proprietary binary
-  if(nvcomp_proprietary_binary AND patch_command)
-    execute_process(COMMAND ${patch_command} WORKING_DIRECTORY ${nvcomp_ROOT})
+    # Apply any patch commands to the proprietary binary
+    if(nvcomp_proprietary_binary AND patch_command)
+      execute_process(COMMAND ${patch_command} WORKING_DIRECTORY ${nvcomp_ROOT})
+    endif()
   endif()
 
   include("${rapids-cmake-dir}/cpm/find.cmake")
-  set(CMAKE_FIND_DEBUG_MODE TRUE)
   rapids_cpm_find(nvcomp ${version} ${_RAPIDS_UNPARSED_ARGUMENTS}
                   GLOBAL_TARGETS nvcomp::nvcomp
                   CPM_ARGS
@@ -134,7 +136,6 @@ function(rapids_cpm_nvcomp)
                   OPTIONS "BUILD_STATIC ON" "BUILD_TESTS OFF" "BUILD_BENCHMARKS OFF"
                           "BUILD_EXAMPLES OFF")
 
-  set(CMAKE_FIND_DEBUG_MODE FALSE)
   include("${rapids-cmake-dir}/cpm/detail/display_patch_status.cmake")
   rapids_cpm_display_patch_status(nvcomp)
 
